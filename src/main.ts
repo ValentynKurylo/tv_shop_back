@@ -11,7 +11,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config)
   SwaggerModule.setup("/api/tv", app, document)
 
-  await app.listen(3000, ()=>{console.log("Server start")});
+  await app.listen(process.env.PORT, ()=>{console.log(`Server start on port ${process.env.PORT}`)});
 
 
 }

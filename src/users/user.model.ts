@@ -1,5 +1,6 @@
 import { Column, DataType, Model, Table } from 'sequelize-typescript';
 import {ApiProperty} from "@nestjs/swagger";
+import {RoleEnum} from "../guards/role.enum";
 
 interface UserCreate{
   username: string,
@@ -25,7 +26,7 @@ export class User extends Model<User, UserCreate> {
     @Column({type: DataType.STRING, defaultValue: 'Null'})
     username: string
 
-    @ApiProperty({example: "user"})
-    @Column({type: DataType.STRING, defaultValue: 'user'})
-    role: string
+    @ApiProperty({example: RoleEnum.USER})
+    @Column({type: DataType.STRING, defaultValue: String(RoleEnum.USER)})
+    role: RoleEnum
 }

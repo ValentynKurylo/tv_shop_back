@@ -3,6 +3,8 @@ import {InjectModel} from "@nestjs/sequelize";
 import {Product} from "./product.model";
 import {CreateProductDTO} from "./dto/createProductDTO";
 import {FilesService} from "../files/files.service";
+import {isFQDN} from "class-validator";
+import {bindCallback} from "rxjs";
 
 @Injectable()
 export class ProductService {
@@ -15,8 +17,17 @@ export class ProductService {
         return product
     }
 
-    async getProducts(){
-        const products = await this.productRepository.findAll()
+    async getProducts(query: any | {}, sort: [string, string][] = [['createdAt', 'DESC']]){
+        let products = []
+        if(query){
+            products = await this.productRepository.findAll({
+                where: query,
+                order: sort
+
+            })
+        }else {
+            products = await this.productRepository.findAll()
+        }
         return products
     }
 
@@ -46,9 +57,20 @@ export class ProductService {
     }
 
     async putProduct(id: number, body: CreateProductDTO){
-        const product = await this.productRepository.update(body, {where: {id:id}})
-        return product
+        try {
+            const product = await this.productRepository.update(body, {where: {id: id}})
+            return product
+        } catch (e) {
+            console.log(e)
+        }
     }
+
+    async patchImage(image: any, id: number){
+        let file = await this.fileService.CreateFile(image)
+        let res = await this.productRepository.update({image: file}, {where: {id:id}})
+        return res
+    }
+
 
     async deleteProduct(id: number){
         const product = await this.productRepository.destroy({where:{id:id}})
@@ -66,11 +88,29 @@ export class ProductService {
 
     }
 
+    async getModels(type: object = null){
+        let models =[]
+        if(type) {
+            models = await this.productRepository.findAll({
+                where: {type},
+                attributes: ['name'],
+                group: ['name'],
+                order: ['name'],
+            })
+        }else{
+            models = await this.productRepository.findAll({
+                attributes: ['name'],
+                group: ['name'],
+                order: ['name'],
+            })
+        }
+        return models.map((item) => item['name']);
+    }
+
     async getAllByQuery(queryParams: any){
 
 
         return await this.productRepository.findAll({ where: queryParams });
     }
-
 
 }

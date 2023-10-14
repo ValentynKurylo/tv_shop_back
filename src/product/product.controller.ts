@@ -4,21 +4,24 @@ import {
     Delete,
     Get,
     Param,
+    Req,
+    Request,
     Post,
     Put,
     UploadedFile,
     UseGuards,
-    UseInterceptors
+    UseInterceptors, Patch
 } from '@nestjs/common';
 import {ProductService} from "./product.service";
 import {CreateProductDTO} from "./dto/createProductDTO";
 import {ApiOperation, ApiResponse} from "@nestjs/swagger";
 import {Product} from "./product.model";
-import {Role} from "../auth/roleAuthDecorator";
-import {roleGuards} from "../auth/roleGuard";
+import {Role} from "../guards/roleAuthDecorator";
+import {roleGuards} from "../guards/roleGuard";
 import {User} from "../users/user.model";
 import {FileInterceptor} from "@nestjs/platform-express";
 import {Op} from "sequelize";
+import {Query} from "typeorm/browser/driver/Query";
 
 @Controller('product')
 export class ProductController {
@@ -40,8 +43,32 @@ export class ProductController {
     @ApiOperation({summary:'get all products'})
     @ApiResponse({status: 200, type: [Product]})
     @Get()
-    getProducts(){
-        return this.productService.getProducts()
+    getProducts(@Req() req: any){
+        const queryParams = req.query
+        const whereClause: any = {};
+        if (queryParams['type']) whereClause.type = queryParams['type'];
+        if (queryParams['name']) whereClause.name = queryParams['name'];
+        if (queryParams['minPrice']) whereClause.price = { ...whereClause.price, [Op.gte]: Number(queryParams['minPrice'])};
+        if (queryParams['maxPrice']) whereClause.price = { ...whereClause.price, [Op.lte]: (queryParams['maxPrice']) };
+        if (queryParams['minYear']) whereClause.year = { ...whereClause.year, [Op.gte]: (queryParams['minYear']) };
+        if (queryParams['maxYear']) whereClause.year = { ...whereClause.year, [Op.lte]: (queryParams['maxYear']) };
+        console.log(whereClause)
+        let sort;
+        switch (queryParams['sortBy']) {
+            case 'price':
+                sort = [['price', 'ASC']];
+                break;
+            case 'year':
+                sort = [['year', 'ASC']];
+                break;
+            case 'name':
+                sort = [['name', 'ASC']];
+                break;
+            default:
+                sort = [['createdAt', 'DESC']];
+                break;
+        }
+        return this.productService.getProducts(whereClause, sort)
     }
 
     @ApiOperation({summary:'Get product by id'})
@@ -84,9 +111,18 @@ export class ProductController {
     @Role("admin", "worker")
     @UseGuards(roleGuards)
     @Put('/:id')
-    putProduct(@Body() body: CreateProductDTO, @Param('id')id: number){
-        this.productService.putProduct(id, body)
-        return "Product was updated"
+    async putProduct(@Body() body: CreateProductDTO, @Param('id') id: number) {
+        const res = await this.productService.putProduct(id, body)
+        return res
+    }
+
+    @ApiOperation({summary:'add image to product'})
+    @ApiResponse({status: 200, type: Product})
+    @UseInterceptors(FileInterceptor('image'))
+    @Patch('/image/:id')
+    async patchImage(@UploadedFile() image, @Param('id')id: number){
+        const res = await this.productService.patchImage(image, id)
+        return res
     }
 
 
@@ -95,30 +131,30 @@ export class ProductController {
     @Role("admin", "worker")
     @UseGuards(roleGuards)
     @Delete('/:id')
-    deleteProduct(@Param('id')id: number){
-        this.productService.deleteProduct(id)
+    async deleteProduct(@Param('id')id: number){
+        await this.productService.deleteProduct(id)
         return "Product was deleted"
     }
 
+    @ApiOperation({summary:'get all types of product'})
+    @ApiResponse({status: 200, type: [String]})
     @Get('/types')
     getTypes(){
         return this.productService.getTypes()
     }
 
+    @ApiOperation({summary:'get all models of product'})
+    @ApiResponse({status: 200, type: [String]})
     @Get('/models')
-    getModels(){}
+    getModels(@Req() request: any){
 
-    @Get()
-    findAll(queryParams: any){
-        const { type, minPrice, maxPrice, minYear, maxYear } = queryParams;
-
-        const whereClause: any = {};
-        if (type) whereClause.type = type;
-        if (minPrice) whereClause.price = { ...whereClause.price, [Op.gte]: minPrice };
-        if (maxPrice) whereClause.price = { ...whereClause.price, [Op.lte]: maxPrice };
-        if (minYear) whereClause.year = { ...whereClause.year, [Op.gte]: minYear };
-        if (maxYear) whereClause.year = { ...whereClause.year, [Op.lte]: maxYear };
-
-        return this.productService.getAllByQuery(whereClause);
+        const query = request.query
+        const type = query['type'];
+        if(type) {
+            return this.productService.getModels(type)
+        }else {
+            return this.productService.getModels()
+        }
     }
+
 }

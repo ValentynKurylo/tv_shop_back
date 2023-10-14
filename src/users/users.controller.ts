@@ -3,11 +3,11 @@ import {UsersService} from "./users.service";
 import {CreateUserDTO} from "./dto/userDTO";
 import {ApiOperation, ApiResponse, ApiTags} from "@nestjs/swagger";
 import {User} from "./user.model";
-import {authGuards} from "../auth/authGuards";
-import {Role} from "../auth/roleAuthDecorator";
-import {roleGuards} from "../auth/roleGuard";
+import {authGuards} from "../guards/authGuards";
+import {Role} from "../guards/roleAuthDecorator";
 import {RoleDTO} from "./dto/roleDTO";
 import {ValidatorPipes} from "../pipes/validatoePipes";
+import {roleGuards} from "../guards/roleGuard";
 
 
 

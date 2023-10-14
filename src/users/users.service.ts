@@ -3,6 +3,7 @@ import {InjectModel} from "@nestjs/sequelize";
 import {User} from "./user.model";
 import {CreateUserDTO} from "./dto/userDTO";
 import { RoleDTO } from './dto/roleDTO';
+import {RoleEnum} from "../guards/role.enum";
 
 
 @Injectable()

@@ -1,5 +1,7 @@
-import { Column, DataType, Model, Table } from 'sequelize-typescript';
+import { Column, DataType, Model, Table, HasMany } from 'sequelize-typescript';
 import {ApiProperty} from "@nestjs/swagger";
+import {ImageModel} from "../images/images.model";
+
 
 interface ProductCreate{
     type: string,
@@ -55,4 +57,7 @@ export class Product extends Model<Product, ProductCreate> {
     @ApiProperty({example: "on sale"})
     @Column({type: DataType.STRING})
     status: string
+
+    @HasMany(()=> ImageModel)
+    images: ImageModel[]
 }

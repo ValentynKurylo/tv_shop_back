@@ -14,7 +14,7 @@ export class AuthService {
 
     async login(userDTO: CreateUserDTO){
         const user = await this.validateUser(userDTO)
-        return this.generateToken(user)
+        return await this.generateToken(user)
     }
 
     async registration(userDTO: CreateUserDTO){
@@ -33,7 +33,7 @@ export class AuthService {
         const payload = {email: user.email, id: user.id, role: user.role, username: user.username}
         return {
             token: this.jwtService.sign(payload),
-            user: payload
+            user_1: payload
         }
     }
 
@@ -48,4 +48,6 @@ export class AuthService {
         }
         return user
     }
+
+
 }
